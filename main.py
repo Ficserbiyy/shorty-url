@@ -46,7 +46,7 @@ async def short_url(
     await session.commit()
     await session.refresh(db_url)
     
-    
+    assert db_url.id is not None 
     shortcode = encode_base62(db_url.id)
     db_url.shortcode = shortcode
     
