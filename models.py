@@ -8,10 +8,10 @@ class UrlBase(SQLModel):
     
 class URL(UrlBase, table=True):
     id: int | None = Field(default=None, primary_key=True )
-    url: str
     shortcode: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    access_count: int = Field(default=0)
     
 class UrlUpdate(SQLModel):
     url: str
@@ -23,7 +23,7 @@ class UrlResponse(UrlBase):
     access_count: int = 0
     
 class Settings(BaseSettings):
-    DATABASE_URL = ''
+    DATABASE_URL: str = ''
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding='utf-8',
