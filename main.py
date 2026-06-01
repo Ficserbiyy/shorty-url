@@ -88,10 +88,11 @@ async def get_url_info(
     
     if not db_url:
         raise HTTPException(status_code=404, detail="Short URL not found")
-    clicks = await redis_client.get(f"stats:{shortcode}")
-    
-    if clicks:
-        db_url.access_count = int(clicks)     
+    new_count = await redis_client.incr(f"stats:{shortcode}")
+
+    db_url.access_count = new_count
+    session.add(db_url)
+    await session.commit()
     return db_url
 
 
