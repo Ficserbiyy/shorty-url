@@ -20,3 +20,17 @@ async def create_db_and_tables():
     """Create database tables based on SQLModel schemas."""
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+        
+        
+ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+def encode_base62(num: int) -> str:
+    if num == 0:
+        return ALPHABET[0]
+    arr = []
+    base = len(ALPHABET)
+    while num:
+        num, rem = divmod(num, base)
+        arr.append(ALPHABET[rem])
+    arr.reverse()
+    return ''.join(arr)
