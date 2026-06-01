@@ -1,12 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, status
 from sqlmodel import select
 from typing import Final, List
-from Logic import encode_base62
 from sqlalchemy.orm import joinedload
 import redis.asyncio as redis
 import json
 from fastapi.encoders import jsonable_encoder
-from dbLogic import get_session, create_db_and_tables, AsyncSession, engine
+from dbLogic import get_session, create_db_and_tables, AsyncSession, engine, encode_base62
 from contextlib import asynccontextmanager
 from models import URL, UrlBase, UrlResponse
 from fastapi.responses import RedirectResponse
@@ -31,7 +30,7 @@ async def short_url(
     request: Request, 
     session: AsyncSession = Depends(get_session)
 ):
-    'Create Short URL'
+    '''Create Short URL'''
     client_ip = request.client.host if request.client else "127.0.0.1"
     limit_key = f"limit:urls:{client_ip}"
     current_count = await redis_client.incr(limit_key)
@@ -88,11 +87,12 @@ async def get_url_info(
     
     if not db_url:
         raise HTTPException(status_code=404, detail="Short URL not found")
-    new_count = await redis_client.incr(f"stats:{shortcode}")
-
-    db_url.access_count = new_count
-    session.add(db_url)
-    await session.commit()
+    clicks = await redis_client.get(f"stats:{shortcode}")
+    
+    if clicks is not None:
+        db_url.access_count = int(clicks)
+        session.add(db_url)
+        await session.commit()
     return db_url
 
 
