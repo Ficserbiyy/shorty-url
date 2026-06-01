@@ -8,9 +8,9 @@ import json
 from fastapi.encoders import jsonable_encoder
 from dbLogic import get_session, create_db_and_tables, AsyncSession, engine
 from contextlib import asynccontextmanager
-from models import URL, UrlBase, UrlResponse, UrlUpdate
+from models import URL, UrlBase, UrlResponse
 from fastapi.responses import RedirectResponse
-
+from datetime import datetime
 
 
 @asynccontextmanager
@@ -25,7 +25,7 @@ redis_client: Final = redis.from_url("redis://localhost:6379", decode_responses=
 
 
 
-@app.post('/shorten', response_model=UrlResponse)
+@app.post('/shorten', response_model=UrlResponse, status_code=201)
 async def short_url(
     url_data: UrlBase,
     request: Request, 
@@ -81,7 +81,7 @@ async def get_url_info(
     shortcode: str, 
     session: AsyncSession = Depends(get_session)
 ):
-    '''Retrieve Original URL'''
+    '''Retrieve Original URL and URL statistics'''
     statement = select(URL).where(URL.shortcode == shortcode)
     result = await session.execute(statement)
     db_url = result.scalars().first()
@@ -92,4 +92,51 @@ async def get_url_info(
     
     if clicks:
         db_url.access_count = int(clicks)     
+    return db_url
+
+
+
+@app.delete('/shorten/{shortcode}', status_code=204)
+async def delete_url(
+    shortcode: str, 
+    session: AsyncSession = Depends(get_session)
+):
+    '''Delete Short URL'''
+    statement = select(URL).where(URL.shortcode == shortcode)
+    result = await session.execute(statement)
+    db_url = result.scalars().first()
+    
+    if not db_url:
+        raise HTTPException(status_code=404, detail="Short URL not found")
+    
+    await session.delete(db_url)
+    await session.commit()
+    
+    await redis_client.delete(f"url:{shortcode}")
+    await redis_client.delete(f"stats:{shortcode}")
+    return None
+
+
+
+@app.put('/shorten/{shortcode}', response_model=UrlResponse, status_code=200)
+async def update_url(
+    shortcode: str, 
+    url_update: UrlBase, 
+    session: AsyncSession = Depends(get_session)
+):
+    '''Update Short URL'''
+    statement = select(URL).where(URL.shortcode == shortcode)
+    result = await session.execute(statement)
+    db_url = result.scalars().first()
+    
+    if not db_url:
+        raise HTTPException(status_code=404, detail="Short URL not found")
+    db_url.url = url_update.url
+    db_url.updated_at = datetime.utcnow()
+    
+    session.add(db_url)
+    await session.commit()
+    await session.refresh(db_url)
+
+    await redis_client.set(f"url:{shortcode}", db_url.url)
     return db_url
