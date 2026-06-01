@@ -75,3 +75,21 @@ async def redirect_to_url(shortcode: str, session: AsyncSession = Depends(get_se
     return RedirectResponse(url=db_url.url)
     
 
+@app.get('/shorten/{shortcode}/stats', response_model=UrlResponse)
+@app.get('/shorten/{shortcode}', response_model=UrlResponse)
+async def get_url_info(
+    shortcode: str, 
+    session: AsyncSession = Depends(get_session)
+):
+    '''Retrieve Original URL'''
+    statement = select(URL).where(URL.shortcode == shortcode)
+    result = await session.execute(statement)
+    db_url = result.scalars().first()
+    
+    if not db_url:
+        raise HTTPException(status_code=404, detail="Short URL not found")
+    clicks = await redis_client.get(f"stats:{shortcode}")
+    
+    if clicks:
+        db_url.access_count = int(clicks)     
+    return db_url
