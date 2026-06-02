@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from models import URL, UrlBase, UrlResponse, settings
 from fastapi.responses import RedirectResponse
 from datetime import datetime
-
+from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,6 +22,18 @@ async def lifespan(app: FastAPI):
 app: Final = FastAPI(lifespan=lifespan)
 redis_client: Final = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
+origins: Final = [
+    "http://localhost",
+    "http://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"], 
+)
 
 
 @app.post('/shorten', response_model=UrlResponse, status_code=201)
