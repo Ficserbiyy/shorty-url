@@ -7,7 +7,7 @@ import json
 from fastapi.encoders import jsonable_encoder
 from dbLogic import get_session, create_db_and_tables, AsyncSession, engine, encode_base62
 from contextlib import asynccontextmanager
-from models import URL, UrlBase, UrlResponse
+from models import URL, UrlBase, UrlResponse, settings
 from fastapi.responses import RedirectResponse
 from datetime import datetime
 
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 
 app: Final = FastAPI(lifespan=lifespan)
-redis_client: Final = redis.from_url("redis://localhost:6379", decode_responses=True)
+redis_client: Final = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
 

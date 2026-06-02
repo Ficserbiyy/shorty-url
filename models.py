@@ -14,7 +14,7 @@ class URL(UrlBase, table=True):
     access_count: int = Field(default=0)
 
 class UrlResponse(UrlBase):
-    id: int | None
+    id: int
     shortcode: str
     created_at: datetime
     updated_at: datetime
@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = "password"
     DB_HOST: str = "db" 
     DB_NAME: str = "shorty"
+    REDIS_URL: str = 'redis://redis:6379'
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding='utf-8',
