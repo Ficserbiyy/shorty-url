@@ -22,7 +22,7 @@ class UrlResponse(UrlBase):
     
 class Settings(BaseSettings):
     DB_USER: str = "postgres"
-    DB_PASSWORD: str = "password"
+    DB_PASSWORD: str = "password" ## Not your password
     DB_HOST: str = "db" 
     DB_NAME: str = "shorty"
     REDIS_URL: str = 'redis://redis:6379'
@@ -37,5 +37,3 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}/{self.DB_NAME}"
 
 settings = Settings()
-    
-    

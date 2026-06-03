@@ -1,10 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlmodel import select
-from typing import Final, List
-from sqlalchemy.orm import joinedload
+from typing import Final
 import redis.asyncio as redis
-import json
-from fastapi.encoders import jsonable_encoder
 from dbLogic import get_session, create_db_and_tables, AsyncSession, engine, encode_base62
 from contextlib import asynccontextmanager
 from models import URL, UrlBase, UrlResponse, settings
@@ -66,9 +63,9 @@ async def short_url(
     await redis_client.set(f"url:{shortcode}", db_url.url)
     return db_url
     
-@app.get('/{shortcode}')
+@app.get('/{shortcode}') # Unnecessary endpoint
 async def redirect_to_url(shortcode: str, session: AsyncSession = Depends(get_session)):
-    'Redirect to Original URL'
+    '''Redirect to Original URL'''
     cached_url = await redis_client.get(f"url:{shortcode}")
     if cached_url:
         if isinstance(cached_url, str):
@@ -86,13 +83,13 @@ async def redirect_to_url(shortcode: str, session: AsyncSession = Depends(get_se
     return RedirectResponse(url=db_url.url)
     
 
-@app.get('/shorten/{shortcode}/stats', response_model=UrlResponse)
-@app.get('/shorten/{shortcode}', response_model=UrlResponse)
+@app.get('/shorten/{shortcode}/stats', response_model=UrlResponse, status_code=200)
+@app.get('/shorten/{shortcode}', response_model=UrlResponse, status_code=200)
 async def get_url_info(
     shortcode: str, 
     session: AsyncSession = Depends(get_session)
 ):
-    '''Retrieve Original URL and URL statistics'''
+    '''Retrieve Original URL and URL statistics from a short URL'''
     statement = select(URL).where(URL.shortcode == shortcode)
     result = await session.execute(statement)
     db_url = result.scalars().first()
