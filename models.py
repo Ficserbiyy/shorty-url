@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class UrlBase(SQLModel):
+    '''To create or update a URL'''
     url: str
     
 class URL(UrlBase, table=True):
@@ -21,6 +22,7 @@ class UrlResponse(UrlBase):
     access_count: int = 0
     
 class Settings(BaseSettings):
+    ''' Enviroment settings '''
     DB_USER: str = "postgres"
     DB_PASSWORD: str = "password" ## Not your password
     DB_HOST: str = "db" 

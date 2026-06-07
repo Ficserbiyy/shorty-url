@@ -9,8 +9,10 @@ from fastapi.responses import RedirectResponse
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+
+
+@asynccontextmanager 
+async def lifespan(app: FastAPI): # Performing startup and shutdown tasks
     await create_db_and_tables()
     yield
     await engine.dispose()       
@@ -47,7 +49,7 @@ async def short_url(
     if current_count == 1:
         await redis_client.expire(limit_key, 60)
     if current_count > 10:
-        raise HTTPException(status_code=429, detail="Too many requests")
+        raise HTTPException(status_code=429, detail="Too Many Requests")
     
     db_url = URL(url=url_data.url, shortcode="")
     session.add(db_url)
@@ -63,7 +65,8 @@ async def short_url(
     await redis_client.set(f"url:{shortcode}", db_url.url)
     return db_url
     
-@app.get('/{shortcode}') # Unnecessary endpoint
+    
+@app.get('/{shortcode}')
 async def redirect_to_url(shortcode: str, session: AsyncSession = Depends(get_session)):
     '''Redirect to Original URL'''
     cached_url = await redis_client.get(f"url:{shortcode}")
